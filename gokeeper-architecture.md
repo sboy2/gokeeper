@@ -310,7 +310,7 @@ One reference-data route (§9) drives all seven tables off this spec. Custom ent
 ```
 MATCH_RULE
   id, entity_type ('pokemon'|'postcard'), name,
-  field_keys (JSON array, order-insensitive),
+  field_keys (JSON array — canonical sorted tuple; see below),
   null_policy ('NULL_MATCHES_NULL' | 'NULL_NEVER_MATCHES'),
   is_active, created_at
 
@@ -324,12 +324,14 @@ MATCH_SIGNATURE
 
 Both the readable signature and its hash are stored. The hash is indexed and grouped; the readable string answers "why are these two duplicates?", which is the question that always follows.
 
+**`field_keys` is stored already sorted.** On `create_rule` / `update_rule`, the service sorts the field key list lexicographically and persists that canonical JSON array. UI checkbox order must not produce a distinct rule: two rules with the same fields in different selection order are identical after write, and equality / "is this preset already saved?" compares the stored form. Signature construction iterates `rule.field_keys` in storage order and does not re-sort.
+
 ### 6.2 Signature construction
 
 ```python
 def signature(rule: MatchRule, row: Mapping[str, Any], registry: Registry) -> str:
     parts = []
-    for key in sorted(rule.field_keys):            # order-insensitive
+    for key in rule.field_keys:                    # already canonical-sorted in DB
         spec = registry[key]
         value = spec.compute(row) if spec.compute else row.get(key)
         if value is None:
@@ -594,6 +596,8 @@ Background labels are mechanical humanizations of the proto key ("2023 Lasvegas 
 
 **Committed CSVs under `data/seed/` are the public contract** of reference data. Runtime (`admin.apply_seed`) and tests read only those files. Upstream JSON (Masterfile, Game Master, holoholo-text, protos) is an implementation detail of the build script.
 
+**Natural keys only in the seed contract.** Seed CSVs identify rows by stable domain keys (`badge_key`, `costume_id` / `proto_key`, `family_key`, `move_key`, dex number + form proto, and so on). They must not carry runtime surrogate integer `id` values. Surrogates are assigned once in the user database on first apply and preserved on later upserts and USER→SEED collisions (§5). Committed seed ids would disagree with every existing user DB and break the "natural-key collision preserves IDs" rule. Cross-CSV references inside the seed set also use natural keys; `apply_seed` resolves them to integers in dependency order.
+
 `scripts/build_seed.py` reads pinned sources through one adapter per source (parse → normalised records) and emits CSVs. The generated CSVs are committed; the multi-megabyte sources are not. Swapping a mirror means replacing one adapter and re-running the build; `src/gokeeper/` and `web/` must not import source JSON.
 
 `admin.apply_seed` performs an idempotent upsert on natural key, never a wipe-and-reload. `app_meta.seed_version` stores the Game Master `batchId` recorded in the seed metadata CSV (not by fetching GitHub at runtime).
@@ -701,7 +705,7 @@ The default `pytest` run enforces 100% line and branch coverage on `src/gokeeper
 
 ### 11.1 Pure core
 
-- **`matching/`** — property tests: signature invariant to field order in the rule; two rows differing only in a non-rule field produce identical signatures; `NULL_NEVER_MATCHES` never groups. Table-driven cases per normalizer, with `level` formatting explicitly covered.
+- **`matching/`** — property tests: signature invariant to field order in the rule; `create_rule` / `update_rule` persist a lexicographically sorted `field_keys` array so two write orders yield identical stored rules; two rows differing only in a non-rule field produce identical signatures; `NULL_NEVER_MATCHES` never groups. Table-driven cases per normalizer, with `level` formatting explicitly covered.
 - **Evolution seeding** — every species resolves to exactly one family; `evolution_stage` is consistent across branching families (all eight Eeveelutions at stage 2); form-qualified edges preserve form (Alolan Vulpix → Alolan Ninetales, never Kantonian); no edge references a mega; all five `evolution_override` rows apply before stage computation.
 - **`build_seed.py`** — golden test against pinned source fixtures; asserts the duplicate-species dedupe, variable `rank_count` handling, `costume.no_evolve` true for exactly the 43 `_NOEVOLVE` enum values, and a hard failure on any unmatched cross-source join.
 - **`services/reference.py`** — seed refresh does not touch `source='USER'`; natural-key collision preserves IDs; `merge_entries` leaves zero dangling FKs.
@@ -768,6 +772,8 @@ Fixtures set `GOKEEPER_DATA_DIR` to a `tmp_path` for every test and create a fre
 | Write path | HTML form primary | CSV- or spreadsheet-first | GO has no inventory export; CSV is secondary |
 | Home route | Duplicate queue | Collection table | Disposition is the reason the app exists vs a sheet |
 | Seed contract | `data/seed/*.csv` | Runtime JSON miners | Swappable sources; app never parses Game Master |
+| Seed row identity | Natural keys only | Surrogate ids in CSVs | User DB assigns ids once; collision preserve (§5) stays coherent |
+| `match_rule.field_keys` | Canonical sorted JSON array | UI selection order | Same field set ⇒ same stored rule; signature need not re-sort |
 | Layers | Services + repos kept | Collapse into `store.py` | Same library may be reused by sibling tools |
 
 ---
