@@ -1,7 +1,7 @@
 [project]
 name = "gokeeper"
 version = "0.1.0"
-description = "Local inventory and duplicate manager for a Pokémon GO account"
+description = "Local inventory and duplicate manager for Pokémon GO"
 readme = "README.md"
 requires-python = ">=3.13"
 license = { text = "MIT" }
