@@ -4,7 +4,7 @@ A single-user, locally-run app for tracking a Pokémon GO account: caught Pokém
 
 **Offline-first.** No Niantic API, no cloud sync. Your data lives in a SQLite file on your machine.
 
-> **Status:** Early development. See [gokeeper-architecture.md](./gokeeper-architecture.md) for the full design. The web UI and domain library are not yet implemented.
+> **Status:** Early development. See [gokeeper-architecture.md](./gokeeper-architecture.md) for the full design. The web UI and domain library are not yet implemented. Post-v1 ideas live in [ROADMAP.md](./ROADMAP.md); near-term work in [GitHub Issues](https://github.com/sboy2/gokeeper/issues).
 
 ## Features
 
