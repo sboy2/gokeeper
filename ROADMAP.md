@@ -12,6 +12,7 @@ Near-term work (what you plan to build soon) lives in [GitHub Issues](https://gi
 - **Screenshot / OCR ingestion** — out of v1; revisit only if offline, local OCR stays dependency-light and does not become the primary entry path.
 - **Richer seed / mirror ops** — README guidance for verifying replacement Game Master / Masterfile mirrors when upstreams go stale (§13).
 - **Seed SQLite database** — add a seed database that is built from the csv files to copy into the user database to add seed data FK enforcements.
+- **Shared local-app contract package** — extract path resolution (`platformdirs` + env/config overrides), `user_version` migrations, `ReferenceTableSpec` (SEED/USER, merge, deactivate), and `FieldSpec` / matching primitives into a small reusable library. Sibling tools share conventions, not gokeeper's Pokémon/postcard tables; combine later as separate SQLite files (or schemas) behind one FastAPI process.
 
 ## Not on the roadmap
 
