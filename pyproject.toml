@@ -1,0 +1,73 @@
+[project]
+name = "gokeeper"
+version = "0.1.0"
+description = "Local inventory and duplicate manager for a Pokémon GO account"
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "MIT" }
+authors = [
+    { name = "Spencer Ashton", email = "spencerbashton@icloud.com" },
+]
+keywords = ["pokemon-go", "inventory", "sqlite", "fastapi"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Games/Entertainment",
+]
+
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "jinja2>=3.1",
+    "platformdirs>=4.0",
+    "python-multipart>=0.0.12",
+    "itsdangerous>=2.2",
+]
+
+[project.scripts]
+gokeeper = "web.app:main"
+
+[project.urls]
+Documentation = "https://github.com/sboy2/gokeeper/blob/main/gokeeper-architecture.md"
+Repository = "https://github.com/sboy2/gokeeper"
+Issues = "https://github.com/sboy2/gokeeper/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gokeeper"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+    "httpx>=0.27",
+    "hypothesis>=6.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+filterwarnings = ["ignore::DeprecationWarning"]
+addopts = [
+    "--cov=gokeeper",
+    "--cov=web",
+    "--cov-report=term-missing",
+    "--cov-fail-under=100",
+]
+
+[tool.coverage.run]
+source = ["src/gokeeper", "web"]
+branch = true
+omit = ["tests/*"]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+skip_covered = false
