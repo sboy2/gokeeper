@@ -17,3 +17,6 @@ wheels/
 
 # Environment variables
 .env
+
+# Coverage
+.coverage*
