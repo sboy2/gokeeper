@@ -7,8 +7,6 @@ from pathlib import Path
 from gokeeper.db.connection import connect
 from gokeeper.db.migrations import run_migrations
 
-REPO_MIGRATIONS_DIR = Path(__file__).resolve().parents[2] / "migrations"
-
 
 def _user_version(conn) -> int:
     row = conn.execute("PRAGMA user_version").fetchone()
@@ -24,11 +22,13 @@ def _table_exists(conn, table_name: str) -> bool:
     return row is not None
 
 
-def test_run_migrations_applies_stub_and_sets_user_version() -> None:
+def test_run_migrations_applies_stub_and_sets_user_version(
+    migrations_dir: Path,
+) -> None:
     """Repo stub migration creates app_meta and sets user_version to 1."""
     conn = connect(":memory:")
     try:
-        version = run_migrations(conn, REPO_MIGRATIONS_DIR)
+        version = run_migrations(conn, migrations_dir)
         assert version == 1
         assert _user_version(conn) == 1
         assert _table_exists(conn, "app_meta")
@@ -36,19 +36,18 @@ def test_run_migrations_applies_stub_and_sets_user_version() -> None:
         conn.close()
 
 
-def test_run_migrations_second_apply_is_noop() -> None:
+def test_run_migrations_second_apply_is_noop(migrations_dir: Path) -> None:
     """Re-running migrations leaves user_version unchanged and does not error."""
     conn = connect(":memory:")
     try:
-        first = run_migrations(conn, REPO_MIGRATIONS_DIR)
-        second = run_migrations(conn, REPO_MIGRATIONS_DIR)
+        first = run_migrations(conn, migrations_dir)
+        second = run_migrations(conn, migrations_dir)
         assert first == 1
         assert second == 1
         assert _user_version(conn) == 1
         assert _table_exists(conn, "app_meta")
     finally:
         conn.close()
-
 
 def test_run_migrations_applies_pending_files_in_order(tmp_path: Path) -> None:
     """Multiple numbered SQL files apply in order and advance user_version."""
