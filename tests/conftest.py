@@ -3,7 +3,8 @@
 Autouse ``gokeeper_data_dir`` ensures every test points ``GOKEEPER_DATA_DIR``
 at a temporary directory so the suite never touches the developer's real
 database (§11.2 / CONTRIBUTING). Request ``migrated_db_connection`` when a
-test needs an open, migrated SQLite connection under that temp dir.
+test needs an open, migrated SQLite connection under that temp dir. Web tests
+use ``app`` and ``client`` for a fresh FastAPI instance with lifespan started.
 """
 
 from __future__ import annotations
@@ -13,10 +14,13 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from gokeeper.db.connection import connect
 from gokeeper.db.migrations import run_migrations
 from gokeeper.db.paths import db_path
+from web.app import create_app
 
 
 @pytest.fixture
@@ -87,3 +91,44 @@ def migrated_db_connection(
         yield conn
     finally:
         conn.close()
+
+
+@pytest.fixture
+def app(migrations_dir: Path) -> FastAPI:
+    """Return a fresh FastAPI application for web-layer tests.
+
+    Each test gets a new app instance so lifespan opens a separate database
+    connection. Passes the repository ``migrations_dir`` explicitly.
+
+    Parameters
+    ----------
+    migrations_dir : Path
+        Repository migrations directory.
+
+    Returns
+    -------
+    FastAPI
+        Application factory result without a started lifespan.
+    """
+    return create_app(migrations_dir=migrations_dir)
+
+
+@pytest.fixture
+def client(app: FastAPI) -> Iterator[TestClient]:
+    """Yield a TestClient with lifespan startup and shutdown run.
+
+    Uses ``with TestClient(app)`` so startup migrations and connection setup
+    run before the test and the connection closes on teardown.
+
+    Parameters
+    ----------
+    app : FastAPI
+        Application under test.
+
+    Yields
+    ------
+    TestClient
+        HTTP client bound to the application lifespan.
+    """
+    with TestClient(app) as test_client:
+        yield test_client

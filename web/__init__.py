@@ -1,4 +1,4 @@
 """FastAPI + Jinja + HTMX web layer.
 
-No SQL in this package. Application entrypoint lands in a later block.
+No SQL in this package. Application entrypoint is ``web.app:main``.
 """
