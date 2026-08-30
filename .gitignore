@@ -18,5 +18,6 @@ wheels/
 # Environment variables
 .env
 
-# Coverage
+# Coverage files
 .coverage*
+htmlcov/
