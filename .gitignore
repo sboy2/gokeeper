@@ -21,3 +21,6 @@ wheels/
 # Coverage files
 .coverage*
 htmlcov/
+
+# GitHub Issue drafts
+.github/issue-drafts/
