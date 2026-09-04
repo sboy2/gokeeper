@@ -13,6 +13,7 @@ from gokeeper.registry.core import (
 
 __all__ = [
     "POKEMON_REGISTRY",
+    "POSTCARD_REGISTRY",
     "FieldKind",
     "FieldSpec",
     "Registry",
@@ -28,4 +29,8 @@ def __getattr__(name: str) -> Any:
         from gokeeper.registry.pokemon import POKEMON_REGISTRY
 
         return POKEMON_REGISTRY
+    if name == "POSTCARD_REGISTRY":
+        from gokeeper.registry.postcard import POSTCARD_REGISTRY
+
+        return POSTCARD_REGISTRY
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
