@@ -28,8 +28,8 @@ class FieldKind(StrEnum):
 def default_norm(value: Any) -> str:
     """Normalize a field value to its canonical string form.
 
-    Placeholder implementation until ``matching.normalizers`` provides
-    per-kind dispatch in #11.
+    Delegates to ``gokeeper.matching.normalizers.default_norm`` (§6.3).
+    Imported lazily to avoid a registry ↔ matching import cycle.
 
     Parameters
     ----------
@@ -39,15 +39,18 @@ def default_norm(value: Any) -> str:
     Returns
     -------
     str
-        String representation of ``value``.
+        Canonical string form.
     """
-    return str(value)
+    from gokeeper.matching.normalizers import default_norm as _default_norm
+
+    return _default_norm(value)
 
 
 def normalizer_for_kind(kind: FieldKind) -> Callable[[Any], str]:
     """Return the normalizer for a field kind.
 
-    Stub that delegates to ``default_norm`` for every kind; expanded in #11.
+    Delegates to ``gokeeper.matching.normalizers.normalizer_for_kind``.
+    Imported lazily to avoid a registry ↔ matching import cycle.
 
     Parameters
     ----------
@@ -59,8 +62,11 @@ def normalizer_for_kind(kind: FieldKind) -> Callable[[Any], str]:
     Callable[[Any], str]
         Normalizer callable for values of ``kind``.
     """
-    _ = kind
-    return default_norm
+    from gokeeper.matching.normalizers import (
+        normalizer_for_kind as _normalizer_for_kind,
+    )
+
+    return _normalizer_for_kind(kind)
 
 
 @dataclass(frozen=True)
@@ -146,7 +152,9 @@ def build_field_spec(
     FieldSpec
         Frozen field specification.
     """
-    resolved_normalizer = normalizer if normalizer is not None else normalizer_for_kind(kind)
+    resolved_normalizer = (
+        normalizer if normalizer is not None else normalizer_for_kind(kind)
+    )
     return FieldSpec(
         key=key,
         label=label,

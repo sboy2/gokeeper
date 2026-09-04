@@ -148,34 +148,31 @@ def test_field_kind_covers_all_kinds() -> None:
     }
 
 
-def test_default_norm_stringifies_value() -> None:
-    """default_norm is a placeholder normalizer until #11 wires per-kind dispatch."""
-    from gokeeper.registry.core import default_norm
-
-    assert default_norm(42) == "42"
-    assert default_norm("hello") == "hello"
-
-
-def test_normalizer_for_kind_returns_callable() -> None:
-    """normalizer_for_kind returns a callable (stub expanded in #11)."""
-    from gokeeper.registry.core import default_norm, normalizer_for_kind
-
-    normalizer = normalizer_for_kind(FieldKind.TEXT)
-    assert callable(normalizer)
-    assert normalizer("x") == default_norm("x")
-
-
 def test_field_spec_uses_default_normalizer() -> None:
     """FieldSpec defaults normalizer to default_norm when not provided."""
     from gokeeper.registry.core import default_norm
 
     spec = FieldSpec(key="x", label="X", kind=FieldKind.TEXT)
     assert spec.normalizer is default_norm
+    assert default_norm("  Hello  ") == "hello"
 
 
 def test_build_field_spec_assigns_kind_normalizer() -> None:
     """build_field_spec wires normalizer_for_kind when normalizer is omitted."""
+    from gokeeper.matching.normalizers import normalize_real
     from gokeeper.registry.core import build_field_spec, normalizer_for_kind
 
-    spec = build_field_spec(key="level", label="Level", kind=FieldKind.REAL)
+    spec = build_field_spec(key="weight_kg", label="Weight", kind=FieldKind.REAL)
     assert spec.normalizer is normalizer_for_kind(FieldKind.REAL)
+    assert spec.normalizer is normalize_real
+    assert spec.normalizer(1.5) == "1.5"
+
+
+def test_build_field_spec_bool_uses_bool_normalizer() -> None:
+    """build_field_spec assigns normalize_bool for BOOL fields."""
+    from gokeeper.matching.normalizers import normalize_bool
+    from gokeeper.registry.core import build_field_spec
+
+    spec = build_field_spec(key="is_shiny", label="Shiny", kind=FieldKind.BOOL)
+    assert spec.normalizer is normalize_bool
+    assert spec.normalizer(True) == "1"
