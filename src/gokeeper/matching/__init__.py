@@ -11,8 +11,12 @@ from gokeeper.matching.normalizers import (
     normalize_text,
     normalizer_for_kind,
 )
+from gokeeper.matching.signature import signature, signature_hash
+from gokeeper.models import MatchRule, NullPolicy
 
 __all__ = [
+    "MatchRule",
+    "NullPolicy",
     "default_norm",
     "normalize_bool",
     "normalize_date",
@@ -22,4 +26,6 @@ __all__ = [
     "normalize_real",
     "normalize_text",
     "normalizer_for_kind",
+    "signature",
+    "signature_hash",
 ]
