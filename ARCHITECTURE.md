@@ -240,7 +240,7 @@ Medals are single-instance per account and sit outside the duplicate system enti
 | Rarity flags | `is_shiny`, `is_lucky`, `shadow_state` (`NORMAL`/`SHADOW`/`PURIFIED`), `is_traded`, `is_favorite` |
 | Stats | `atk_iv`, `def_iv`, `hp_iv`, `cp`, `hp`, `level`, `weight_kg`, `height_m`, `size_class` |
 | Moves | `fast_move_id`, `charged_move_1_id`, `charged_move_2_id` |
-| Buddy / Max | `buddy_level`, `dynamax_level`, `is_gigantamax` |
+| Buddy / Mega / Max | `buddy_level`, `mega_level`, `is_dynamax`, `is_gigantamax`, `max_attack_level`, `max_guard_level`, `max_spirit_level` |
 | Provenance | `origin`, `caught_at`, `caught_location`, `background_id`, `original_trainer` |
 | Workflow | `disposition` (`KEEP`/`REVIEW`/`RELEASE`, nullable) |
 | Housekeeping | `tags` (JSON array), `notes`, `is_released`, `released_at`, `created_at`, `updated_at` |
@@ -256,6 +256,12 @@ level REAL NOT NULL CHECK (
 Levels advance in half-steps, and every half-step is exactly representable in IEEE 754 (0.5 is 2⁻¹), so `REAL` equality is safe. The CHECK enforces the domain. The residual risk is formatting on CSV import — `"40.50"`, `"40,5"` — which is the normalizer's job (§6.3).
 
 `origin` enum: `WILD`, `RAID`, `EGG`, `RESEARCH`, `TRADE`, `BATTLE_LEAGUE`, `INCENSE`, `PURIFY`, `EVOLVE`, `MAX_BATTLE`, `OTHER`.
+
+**Buddy and Mega levels.** `buddy_level` and `mega_level` are non-negative integers on the same 0–N domain (0 = none / not unlocked). Mega is an instance state, not an evolution edge — mega forms stay out of `evolution_edge` (§3.2).
+
+**Dynamax / Gigantamax flags.** `is_dynamax` and `is_gigantamax` are booleans on the specimen (Dynamax is not a level).
+
+**Max Moves (levels only).** Every Dynamax Pokémon has three Max Move slots: attack, Max Guard, and Max Spirit. Inventory stores levels, not move FKs — the attacking Max Move’s type is derived from the Fast Attack (or a species-fixed G-Max move), so a separate `max_move` reference table is unnecessary for v1. Each of `max_attack_level`, `max_guard_level`, and `max_spirit_level` is nullable: `NULL` means locked / not applicable; `1`, `2`, or `3` is the unlocked level. Attack starts at level 1 for Dynamax catches; Guard and Spirit start locked. All three are matchable for “same Max build” rules.
 
 **Soft delete.** Transferring a Pokémon in-game sets `is_released = 1` rather than deleting the row. Inventory history survives, and duplicate views filter on `is_released = 0` by default.
 

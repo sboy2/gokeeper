@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 
 import pytest
 
@@ -112,7 +112,7 @@ def test_normalize_real_table(raw: object, expected: str) -> None:
     ("raw", "expected"),
     [
         (date(2024, 1, 15), "2024-01-15"),
-        (datetime(2024, 1, 15, 13, 45, 0, tzinfo=datetime.UTC), "2024-01-15"),
+        (datetime(2024, 1, 15, 13, 45, 0, tzinfo=UTC), "2024-01-15"),
         ("2024-01-15", "2024-01-15"),
         ("2024-01-15T13:45:00", "2024-01-15"),
         ("2024-01-15 13:45:00", "2024-01-15"),
